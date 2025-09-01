@@ -1,0 +1,66 @@
+openapi: 3.0.3
+info:
+  title: Promotion Service API
+  version: 1.0.0
+  description: Manages promotions, coupons, and validation.
+
+servers:
+  - url: http://localhost:8108
+    description: Local
+  - url: https://promo.foodly.example.com
+    description: Production
+
+tags:
+  - name: Promotions
+
+paths:
+  /promotions/validate:
+    post:
+      tags: [Promotions]
+      summary: Validate a promotion code for an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PromotionValidationRequest' }
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PromotionValidationResult' }
+        '404': { description: Invalid or expired promotion }
+
+components:
+  schemas:
+    Promotion:
+      type: object
+      required: [id, code, type, value, active]
+      properties:
+        id: { type: string }
+        code: { type: string }
+        type:
+          type: string
+          enum: [percentage, fixed, free_delivery]
+        value: { type: number, format: float }
+        minOrderValue: { type: number, format: float }
+        maxDiscount: { type: number, format: float }
+        validFrom: { type: string, format: date-time }
+        validTo: { type: string, format: date-time }
+        active: { type: boolean }
+
+    PromotionValidationRequest:
+      type: object
+      required: [code, orderId]
+      properties:
+        code: { type: string }
+        orderId: { type: string }
+
+    PromotionValidationResult:
+      type: object
+      required: [valid, discount, message]
+      properties:
+        valid: { type: boolean }
+        discount: { type: number, format: float }
+        message: { type: string }
+        promotion: { $ref: '#/components/schemas/Promotion' }
